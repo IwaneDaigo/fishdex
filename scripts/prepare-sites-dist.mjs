@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const root = process.cwd();
@@ -13,10 +13,9 @@ rmSync(distDir, { recursive: true, force: true });
 mkdirSync(distDir, { recursive: true });
 cpSync(openNextDir, distDir, { recursive: true });
 
-const workerSource = join(openNextDir, "worker.js");
 const workerTarget = join(distDir, "server", "index.js");
 mkdirSync(dirname(workerTarget), { recursive: true });
-cpSync(workerSource, workerTarget);
+writeFileSync(workerTarget, 'export { default } from "../worker.js";\nexport * from "../worker.js";\n');
 
 const hostingPath = join(root, ".openai", "hosting.json");
 if (existsSync(hostingPath)) {
