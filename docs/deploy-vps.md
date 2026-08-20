@@ -53,7 +53,7 @@ docker compose logs -f fishdex
 ローカル確認:
 
 ```bash
-curl -I http://127.0.0.1:3000
+curl -I http://127.0.0.1:3001
 ```
 
 ## 5. Nginxを設定する
