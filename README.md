@@ -8,7 +8,7 @@
 - TypeScript
 - Tailwind CSS
 - Supabase Auth / PostgreSQL / Storage
-- Gemini API（Google公式SDK）
+- Gemini API（サーバー側REST呼び出し）
 - Zod
 - Vitest
 
@@ -70,6 +70,24 @@ npm run typecheck
 npm run test
 npm run build
 ```
+
+Cloudflare Sites向けの `npm run build` とは別に、自前サーバーでは以下を使います。
+
+```bash
+npm run build:server
+npm run start
+```
+
+## VPS / Docker デプロイ
+
+自前サーバーへ公開する場合は、Docker Compose + Nginx の構成を用意しています。
+
+```bash
+cp .env.example .env.production
+docker compose up -d --build
+```
+
+詳しい手順は `docs/deploy-vps.md` を参照してください。
 
 ## ディレクトリ構成
 
