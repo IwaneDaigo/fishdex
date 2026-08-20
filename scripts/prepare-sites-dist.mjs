@@ -10,12 +10,12 @@ if (!existsSync(join(openNextDir, "worker.js"))) {
 }
 
 rmSync(distDir, { recursive: true, force: true });
-mkdirSync(distDir, { recursive: true });
-cpSync(openNextDir, distDir, { recursive: true });
+mkdirSync(join(distDir, "server"), { recursive: true });
+cpSync(openNextDir, join(distDir, "server"), { recursive: true });
 
 const workerTarget = join(distDir, "server", "index.js");
 mkdirSync(dirname(workerTarget), { recursive: true });
-writeFileSync(workerTarget, 'export { default } from "../worker.js";\nexport * from "../worker.js";\n');
+cpSync(join(openNextDir, "worker.js"), workerTarget);
 
 const hostingPath = join(root, ".openai", "hosting.json");
 if (existsSync(hostingPath)) {
