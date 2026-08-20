@@ -7,11 +7,11 @@
 ドメインのDNSで、VPSのIPv4アドレスへ `A` レコードを向けます。
 
 ```text
-example.com      A      <VPSのIPv4>
-www.example.com  A      <VPSのIPv4>
+fisdexfordiving.sbs      A      162.43.22.161
+www.fisdexfordiving.sbs  A      162.43.22.161
 ```
 
-`example.com` は取得したドメインに置き換えてください。
+ドメインは `fisdexfordiving.sbs`、VPSのIPv4は `162.43.22.161` です。
 
 ## 2. VPSに必要なものを入れる
 
@@ -60,7 +60,6 @@ curl -I http://127.0.0.1:3000
 
 ```bash
 sudo cp deploy/nginx/fishdex.conf /etc/nginx/sites-available/fishdex
-sudo sed -i 's/example.com/あなたのドメイン/g' /etc/nginx/sites-available/fishdex
 sudo ln -s /etc/nginx/sites-available/fishdex /etc/nginx/sites-enabled/fishdex
 sudo nginx -t
 sudo systemctl reload nginx
@@ -69,7 +68,7 @@ sudo systemctl reload nginx
 ## 6. HTTPS化する
 
 ```bash
-sudo certbot --nginx -d あなたのドメイン -d www.あなたのドメイン
+sudo certbot --nginx -d fisdexfordiving.sbs -d www.fisdexfordiving.sbs
 ```
 
 ## 更新するとき
