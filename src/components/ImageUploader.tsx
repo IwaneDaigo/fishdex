@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Camera } from "lucide-react";
 
 type Props = {
@@ -21,7 +20,8 @@ export function ImageUploader({ previewUrl, onFileChange }: Props) {
       />
       <div className="relative aspect-[4/3]">
         {previewUrl ? (
-          <Image src={previewUrl} alt="選択した魚写真" fill className="object-cover" sizes="100vw" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={previewUrl} alt="選択した魚写真" className="h-full w-full object-cover" />
         ) : (
           <div className="grid h-full place-items-center p-6 text-center">
             <div>

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 export type FishCardProps = {
@@ -15,7 +14,8 @@ export function FishCard(props: FishCardProps) {
     <Link className="group overflow-hidden rounded-lg bg-white shadow-soft transition hover:-translate-y-0.5" href={`/dex/${props.speciesId}`}>
       <div className="relative aspect-[4/3] bg-slate-200">
         {props.imageUrl ? (
-          <Image src={props.imageUrl} alt={props.japaneseName} fill className="object-cover" sizes="(max-width: 768px) 50vw, 280px" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={props.imageUrl} alt={props.japaneseName} className="h-full w-full object-cover" />
         ) : (
           <div className="grid h-full place-items-center text-sm font-bold text-slate-500">No Photo</div>
         )}

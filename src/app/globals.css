@@ -12,6 +12,8 @@ body {
     radial-gradient(circle at top left, rgba(31, 143, 125, 0.18), transparent 28rem),
     linear-gradient(180deg, #f2fbff 0%, #e9f7fb 46%, #f8fbfc 100%);
   color: #08111f;
+  font-family:
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 button,

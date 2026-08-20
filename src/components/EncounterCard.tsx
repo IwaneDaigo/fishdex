@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 export type EncounterCardProps = {
   imageUrl: string | null;
   locationName: string | null;
@@ -14,7 +12,8 @@ export function EncounterCard(props: EncounterCardProps) {
     <article className="overflow-hidden rounded-lg bg-white shadow-soft">
       <div className="relative aspect-[4/3] bg-slate-200">
         {props.imageUrl ? (
-          <Image src={props.imageUrl} alt="遭遇写真" fill className="object-cover" sizes="(max-width: 768px) 100vw, 420px" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={props.imageUrl} alt="遭遇写真" className="h-full w-full object-cover" />
         ) : (
           <div className="grid h-full place-items-center text-sm font-bold text-slate-500">No Photo</div>
         )}
