@@ -1,7 +1,5 @@
-import { Type } from "@google/genai";
 import { isGeminiMockMode } from "@/lib/env";
 import type { DiveMetadata } from "@/types/fish";
-import { createGeminiClient } from "./client";
 import { parseFishIdentification, type FishIdentificationOutput } from "./schema";
 
 type IdentifyFishParams = {
@@ -11,6 +9,7 @@ type IdentifyFishParams = {
 };
 
 const model = "gemini-3.7-flash";
+const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 export async function identifyFishImage({
   imageBuffer,
@@ -21,7 +20,11 @@ export async function identifyFishImage({
     return mockFishIdentification();
   }
 
-  const ai = createGeminiClient();
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured.");
+  }
+
   const metadataText = [
     metadata.locationName ? `撮影場所: ${metadata.locationName}` : null,
     metadata.encounteredAt ? `撮影日: ${metadata.encounteredAt}` : null,
@@ -32,58 +35,80 @@ export async function identifyFishImage({
     .filter(Boolean)
     .join("\n");
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `あなたは水中生物・魚類識別を支援するAIです。写真に写っている主な魚を識別してください。色、模様、体型、ヒレ、目、尾、地域、水深、生息環境を総合的に考慮し、確信がない場合は低いconfidenceにしてください。魚が確認できない場合はisFishをfalseにしてください。\n\n${metadataText || "追加の撮影情報はありません。"}`
-          },
-          {
-            inlineData: {
-              mimeType,
-              data: imageBuffer.toString("base64")
-            }
-          }
-        ]
-      }
-    ],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        required: ["isFish", "candidates", "imageQuality", "warning"],
-        properties: {
-          isFish: { type: Type.BOOLEAN },
-          candidates: {
-            type: Type.ARRAY,
-            maxItems: 3,
-            items: {
-              type: Type.OBJECT,
-              required: ["japaneseName", "scientificName", "confidence", "reason"],
-              properties: {
-                japaneseName: { type: Type.STRING },
-                scientificName: { type: Type.STRING, nullable: true },
-                confidence: { type: Type.NUMBER },
-                reason: { type: Type.STRING }
+  const response = await fetch(`${geminiEndpoint}?key=${apiKey}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `あなたは水中生物・魚類識別を支援するAIです。写真に写っている主な魚を識別してください。色、模様、体型、ヒレ、目、尾、地域、水深、生息環境を総合的に考慮し、確信がない場合は低いconfidenceにしてください。魚が確認できない場合はisFishをfalseにしてください。\n\n${metadataText || "追加の撮影情報はありません。"}`
+            },
+            {
+              inlineData: {
+                mimeType,
+                data: imageBuffer.toString("base64")
               }
             }
-          },
-          imageQuality: { type: Type.STRING, enum: ["good", "fair", "poor"] },
-          warning: { type: Type.STRING, nullable: true }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          required: ["isFish", "candidates", "imageQuality", "warning"],
+          properties: {
+            isFish: { type: "BOOLEAN" },
+            candidates: {
+              type: "ARRAY",
+              maxItems: 3,
+              items: {
+                type: "OBJECT",
+                required: ["japaneseName", "scientificName", "confidence", "reason"],
+                properties: {
+                  japaneseName: { type: "STRING" },
+                  scientificName: { type: "STRING", nullable: true },
+                  confidence: { type: "NUMBER" },
+                  reason: { type: "STRING" }
+                }
+              }
+            },
+            imageQuality: { type: "STRING", enum: ["good", "fair", "poor"] },
+            warning: { type: "STRING", nullable: true }
+          }
         }
       }
-    }
+    })
   });
 
-  if (!response.text) {
+  if (!response.ok) {
+    throw new Error("Gemini request failed.");
+  }
+
+  const json = (await response.json()) as GeminiGenerateContentResponse;
+  const text = json.candidates?.[0]?.content?.parts?.find((part) => typeof part.text === "string")?.text;
+
+  if (!text) {
     throw new Error("Gemini returned an empty response.");
   }
 
-  return parseFishIdentification(JSON.parse(response.text));
+  return parseFishIdentification(JSON.parse(text));
 }
+
+type GeminiGenerateContentResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string;
+      }>;
+    };
+  }>;
+};
 
 function mockFishIdentification(): FishIdentificationOutput {
   return parseFishIdentification({
