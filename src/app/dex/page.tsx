@@ -108,22 +108,40 @@ function SetupMessage() {
 function mapDexRow(item: unknown) {
   const row = item as {
     encounter_count?: number;
-    fish_species?: { id?: string; japanese_name?: string; scientific_name?: string | null } | null;
+    fish_species?: RelatedSpecies;
     first_encounter?: { photo_path?: string | null; encountered_at?: string | null; created_at?: string | null } | null;
   };
 
-  if (!row.fish_species?.id || !row.fish_species.japanese_name) {
+  const relatedSpecies = firstRelated(row.fish_species);
+  if (!relatedSpecies?.id || !relatedSpecies.japanese_name) {
     return null;
   }
 
   return {
-    speciesId: row.fish_species.id,
-    japaneseName: row.fish_species.japanese_name,
-    scientificName: row.fish_species.scientific_name ?? null,
+    speciesId: relatedSpecies.id,
+    japaneseName: relatedSpecies.japanese_name,
+    scientificName: relatedSpecies.scientific_name ?? null,
     firstEncounteredAt: row.first_encounter?.encountered_at ?? row.first_encounter?.created_at ?? null,
     encounterCount: row.encounter_count ?? 0,
     photoPath: row.first_encounter?.photo_path ?? null
   };
+}
+
+type RelatedSpecies =
+  | {
+      id?: string;
+      japanese_name?: string;
+      scientific_name?: string | null;
+    }
+  | Array<{
+      id?: string;
+      japanese_name?: string;
+      scientific_name?: string | null;
+    }>
+  | null;
+
+function firstRelated(value: RelatedSpecies) {
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 async function signedPhotoUrl(supabase: Awaited<ReturnType<typeof createClient>>, path: string) {

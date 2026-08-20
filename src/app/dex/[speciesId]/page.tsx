@@ -32,18 +32,19 @@ export default async function SpeciesDetailPage({ params }: { params: Params }) 
       .single(),
     supabase
       .from("encounters")
-      .select("id, photo_path, location_name, depth_m, water_temperature_c, encountered_at, memo, created_at")
+      .select("id, photo_path, location_name, depth_m, water_temperature_c, encountered_at, memo, created_at, fish_species:fish_species_id(japanese_name, scientific_name)")
       .eq("fish_species_id", speciesId)
       .order("created_at", { ascending: false })
   ]);
 
-  const species = mapSpecies(dex);
+  const encounterRows = encounters ?? [];
+  const species = mapSpecies(dex) ?? mapSpeciesFromEncounter(encounterRows[0], encounterRows.length);
   if (!species) {
     notFound();
   }
 
   const encounterCards = await Promise.all(
-    (encounters ?? []).map(async (encounter) => {
+    encounterRows.map(async (encounter) => {
       const row = encounter as {
         id?: string;
         photo_path?: string | null;
@@ -98,16 +99,53 @@ function mapSpecies(item: unknown) {
 
   const row = item as {
     encounter_count?: number;
-    fish_species?: { japanese_name?: string; scientific_name?: string | null } | null;
+    fish_species?: RelatedSpecies;
     created_at?: string | null;
   };
-  if (!row.fish_species?.japanese_name) return null;
+  const relatedSpecies = firstRelated(row.fish_species);
+  if (!relatedSpecies?.japanese_name) return null;
   return {
-    japaneseName: row.fish_species.japanese_name,
-    scientificName: row.fish_species.scientific_name ?? null,
+    japaneseName: relatedSpecies.japanese_name,
+    scientificName: relatedSpecies.scientific_name ?? null,
     encounterCount: row.encounter_count ?? 0,
     firstEncounteredAt: row.created_at ?? null
   };
+}
+
+function mapSpeciesFromEncounter(item: unknown, encounterCount: number) {
+  if (!item || typeof item !== "object") {
+    return null;
+  }
+
+  const row = item as {
+    encountered_at?: string | null;
+    created_at?: string | null;
+    fish_species?: RelatedSpecies;
+  };
+  const relatedSpecies = firstRelated(row.fish_species);
+  if (!relatedSpecies?.japanese_name) return null;
+
+  return {
+    japaneseName: relatedSpecies.japanese_name,
+    scientificName: relatedSpecies.scientific_name ?? null,
+    encounterCount,
+    firstEncounteredAt: row.encountered_at ?? row.created_at ?? null
+  };
+}
+
+type RelatedSpecies =
+  | {
+      japanese_name?: string;
+      scientific_name?: string | null;
+    }
+  | Array<{
+      japanese_name?: string;
+      scientific_name?: string | null;
+    }>
+  | null;
+
+function firstRelated(value: RelatedSpecies) {
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 function Summary({ label, value }: { label: string; value: string }) {
