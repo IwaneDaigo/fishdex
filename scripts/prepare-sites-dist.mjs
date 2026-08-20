@@ -13,6 +13,11 @@ rmSync(distDir, { recursive: true, force: true });
 mkdirSync(distDir, { recursive: true });
 cpSync(openNextDir, distDir, { recursive: true });
 
+const workerSource = join(openNextDir, "worker.js");
+const workerTarget = join(distDir, "server", "index.js");
+mkdirSync(dirname(workerTarget), { recursive: true });
+cpSync(workerSource, workerTarget);
+
 const hostingPath = join(root, ".openai", "hosting.json");
 if (existsSync(hostingPath)) {
   const target = join(distDir, ".openai", "hosting.json");
