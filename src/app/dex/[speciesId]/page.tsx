@@ -142,6 +142,7 @@ type RelatedSpecies =
       japanese_name?: string;
       scientific_name?: string | null;
     }>
+  | undefined
   | null;
 
 function firstRelated(value: RelatedSpecies) {
