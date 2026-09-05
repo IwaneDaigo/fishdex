@@ -38,10 +38,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://enfdppddlmicnnrxsdmh.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=
 GEMINI_API_KEY=<Google AI Studioで作成したAPIキー>
+GEMINI_MODEL=gemini-3.7-flash
 USE_GEMINI_MOCK=false
 ```
 
 Geminiを使わず固定候補で試す場合は、`GEMINI_API_KEY=` を空にして `USE_GEMINI_MOCK=true` にします。
+Gemini APIが一時的に混雑している場合、アプリは短いリトライ後に手入力用の候補へ切り替えます。
 
 ## 4. Dockerで起動する
 

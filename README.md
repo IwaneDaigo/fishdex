@@ -33,6 +33,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.7-flash
 USE_GEMINI_MOCK=true
 ```
 
@@ -42,8 +43,11 @@ Geminiを有効化する場合:
 
 ```bash
 GEMINI_API_KEY=<Google AI Studioで作成したAPIキー>
+GEMINI_MODEL=gemini-3.7-flash
 USE_GEMINI_MOCK=false
 ```
+
+Gemini APIが429/5xxを返した場合は短いリトライを行い、それでも失敗すると写真を保存したまま手入力用の候補を返します。
 
 ## Supabase設定
 
