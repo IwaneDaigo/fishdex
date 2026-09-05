@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
 import { FishCard, type FishCardProps } from "@/components/FishCard";
 import { isSupabaseConfigured } from "@/lib/env";
+import { toUserMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
 type SearchParams = Promise<{ q?: string }>;
@@ -18,12 +20,20 @@ export default async function DexPage({ searchParams }: { searchParams: SearchPa
   }
 
   const { q = "" } = await searchParams;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("user_fish_dex")
     .select(
       "encounter_count, created_at, fish_species:fish_species_id(id, japanese_name, scientific_name), first_encounter:first_encounter_id(photo_path, encountered_at, created_at)"
     )
     .order("created_at", { ascending: false });
+
+  if (error) {
+    return (
+      <div className="shell py-10">
+        <ErrorState message={toUserMessage(error, "MY図鑑を取得できませんでした。")} />
+      </div>
+    );
+  }
 
   const cards = await Promise.all(
     (data ?? [])

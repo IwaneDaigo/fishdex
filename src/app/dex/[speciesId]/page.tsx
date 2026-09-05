@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { EncounterCard } from "@/components/EncounterCard";
+import { ErrorState } from "@/components/ErrorState";
 import { isSupabaseConfigured } from "@/lib/env";
+import { toUserMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
 type Params = Promise<{ speciesId: string }>;
@@ -24,23 +25,51 @@ export default async function SpeciesDetailPage({ params }: { params: Params }) 
     );
   }
 
-  const [{ data: dex }, { data: encounters }] = await Promise.all([
+  const [
+    { data: dex, error: dexError },
+    { data: encounters, error: encountersError },
+    { data: speciesById, error: speciesError }
+  ] = await Promise.all([
     supabase
       .from("user_fish_dex")
       .select("encounter_count, created_at, fish_species:fish_species_id(id, japanese_name, scientific_name)")
       .eq("fish_species_id", speciesId)
-      .single(),
+      .maybeSingle(),
     supabase
       .from("encounters")
       .select("id, photo_path, location_name, depth_m, water_temperature_c, encountered_at, memo, created_at, fish_species:fish_species_id(japanese_name, scientific_name)")
       .eq("fish_species_id", speciesId)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("fish_species")
+      .select("japanese_name, scientific_name")
+      .eq("id", speciesId)
+      .maybeSingle()
   ]);
 
+  const queryError = dexError ?? encountersError ?? speciesError;
+  if (queryError) {
+    return (
+      <div className="shell py-10">
+        <ErrorState message={toUserMessage(queryError, "魚の詳細を取得できませんでした。")} />
+        <Link className="mt-5 inline-flex rounded-full bg-abyss px-5 py-3 font-bold text-white" href="/dex">
+          MY図鑑へ戻る
+        </Link>
+      </div>
+    );
+  }
+
   const encounterRows = encounters ?? [];
-  const species = mapSpecies(dex) ?? mapSpeciesFromEncounter(encounterRows[0], encounterRows.length);
+  const species = mapSpecies(dex) ?? mapSpeciesFromEncounter(encounterRows[0], encounterRows.length) ?? mapSpeciesById(speciesById);
   if (!species) {
-    notFound();
+    return (
+      <div className="shell py-10">
+        <ErrorState message="この魚の詳細データが見つかりませんでした。登録が完了していないか、別のアカウントの記録の可能性があります。" />
+        <Link className="mt-5 inline-flex rounded-full bg-abyss px-5 py-3 font-bold text-white" href="/dex">
+          MY図鑑へ戻る
+        </Link>
+      </div>
+    );
   }
 
   const encounterCards = await Promise.all(
@@ -130,6 +159,25 @@ function mapSpeciesFromEncounter(item: unknown, encounterCount: number) {
     scientificName: relatedSpecies.scientific_name ?? null,
     encounterCount,
     firstEncounteredAt: row.encountered_at ?? row.created_at ?? null
+  };
+}
+
+function mapSpeciesById(item: unknown) {
+  if (!item || typeof item !== "object") {
+    return null;
+  }
+
+  const row = item as {
+    japanese_name?: string;
+    scientific_name?: string | null;
+  };
+  if (!row.japanese_name) return null;
+
+  return {
+    japaneseName: row.japanese_name,
+    scientificName: row.scientific_name ?? null,
+    encounterCount: 0,
+    firstEncounteredAt: null
   };
 }
 
