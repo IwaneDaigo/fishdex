@@ -1,6 +1,6 @@
 # VPSデプロイ手順
 
-この手順は、VPS上で Docker Compose + Nginx + Let's Encrypt を使って FishDex を公開する想定です。
+この手順は、VPS上で Docker Compose + Nginx + Let's Encrypt を使って魚ログを公開する想定です。
 
 ## 1. ドメインを用意する
 

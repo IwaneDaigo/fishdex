@@ -9,10 +9,7 @@ export function Header() {
           <span className="grid h-9 w-9 place-items-center rounded-full bg-abyss text-foam">
             <Fish size={20} aria-hidden />
           </span>
-          <span>
-            魚図鑑
-            <span className="ml-2 text-sm font-bold text-kelp">FishDex</span>
-          </span>
+          <span>魚ログ</span>
         </Link>
         <nav className="hidden items-center gap-2 md:flex">
           <Link className="rounded-full px-4 py-2 text-sm font-bold text-slate-700 hover:bg-white" href="/dex">

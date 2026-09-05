@@ -4,8 +4,8 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "魚図鑑 / FishDex",
-  description: "ダイビングで実際に出会った魚を集めるMY魚図鑑"
+  title: "魚ログ",
+  description: "ダイビングで実際に出会った魚を写真と一緒に記録する魚ログ"
 };
 
 export default function RootLayout({
