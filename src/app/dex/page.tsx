@@ -62,7 +62,8 @@ export default async function DexPage({ searchParams }: { searchParams: SearchPa
       })
       .map(async (item) => ({
         ...item,
-        imageUrl: item.photoPath ? await signedPhotoUrl(supabase, item.photoPath) : null
+        imageUrl: item.photoPath ? await signedPhotoUrl(supabase, item.photoPath) : null,
+        canDelete: true
       }))
   );
 
