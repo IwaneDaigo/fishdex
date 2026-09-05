@@ -14,6 +14,8 @@ function LandingHome() {
   return (
     <div className="shell py-10">
       <section className="mx-auto max-w-2xl text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/uolog-logo.png" alt="魚ログ" className="mx-auto h-40 w-40 object-contain sm:h-52 sm:w-52" />
         <p className="text-sm font-black tracking-[0.16em] text-kelp">UOLOG</p>
         <h1 className="mt-3 text-4xl font-black text-abyss md:text-5xl">魚ログ</h1>
         <p className="mt-4 text-base leading-8 text-slate-600">

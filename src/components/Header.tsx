@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { Fish } from "lucide-react";
 
 export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/70 bg-foam/85 backdrop-blur">
       <div className="shell flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-black tracking-normal text-abyss">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-abyss text-foam">
-            <Fish size={20} aria-hidden />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/uolog-logo.png" alt="" className="h-10 w-10 rounded-full object-contain" />
           <span>魚ログ</span>
         </Link>
         <nav className="hidden items-center gap-2 md:flex">
