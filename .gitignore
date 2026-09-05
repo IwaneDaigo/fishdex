@@ -4,6 +4,7 @@ out
 dist
 coverage
 .env
+.env.production
 .env*.local
 *.tsbuildinfo
 .env.production
