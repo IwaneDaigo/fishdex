@@ -35,10 +35,11 @@ export async function identifyFishImage({
     .filter(Boolean)
     .join("\n");
 
-  const response = await fetch(`${geminiEndpoint}?key=${apiKey}`, {
+  const response = await fetch(geminiEndpoint, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey
     },
     body: JSON.stringify({
       contents: [
@@ -87,7 +88,8 @@ export async function identifyFishImage({
   });
 
   if (!response.ok) {
-    throw new Error("Gemini request failed.");
+    const message = await geminiErrorMessage(response);
+    throw new Error(message);
   }
 
   const json = (await response.json()) as GeminiGenerateContentResponse;
@@ -109,6 +111,24 @@ type GeminiGenerateContentResponse = {
     };
   }>;
 };
+
+async function geminiErrorMessage(response: Response) {
+  const body = await response.text();
+  if (response.status === 400) {
+    return "Geminiへのリクエスト形式が正しくありません。モデル名や画像形式を確認してください。";
+  }
+  if (response.status === 401 || response.status === 403) {
+    return "Gemini APIキーが無効、または権限がありません。Google AI StudioのAPIキーを確認してください。";
+  }
+  if (response.status === 429) {
+    return "Gemini APIの利用上限に達しました。時間をおいてもう一度試してください。";
+  }
+  if (response.status >= 500) {
+    return "Gemini API側で一時的なエラーが発生しています。時間をおいてもう一度試してください。";
+  }
+
+  return `Gemini APIへの接続に失敗しました。status=${response.status} ${body.slice(0, 200)}`;
+}
 
 function mockFishIdentification(): FishIdentificationOutput {
   return parseFishIdentification({

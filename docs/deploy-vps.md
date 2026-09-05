@@ -37,11 +37,11 @@ cp .env.example .env.production
 NEXT_PUBLIC_SUPABASE_URL=https://enfdppddlmicnnrxsdmh.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=
-GEMINI_API_KEY=
-USE_GEMINI_MOCK=true
+GEMINI_API_KEY=<Google AI Studioで作成したAPIキー>
+USE_GEMINI_MOCK=false
 ```
 
-Geminiを本当に使う段階でだけ、`GEMINI_API_KEY` を入れて `USE_GEMINI_MOCK=false` にします。
+Geminiを使わず固定候補で試す場合は、`GEMINI_API_KEY=` を空にして `USE_GEMINI_MOCK=true` にします。
 
 ## 4. Dockerで起動する
 

@@ -38,6 +38,13 @@ USE_GEMINI_MOCK=true
 
 `USE_GEMINI_MOCK=true` の場合、Gemini APIキーがなくても固定の魚種候補を返します。本番では `USE_GEMINI_MOCK=false` とし、`GEMINI_API_KEY` を設定してください。MVPの通常動作では `SUPABASE_SERVICE_ROLE_KEY` は未設定でも動きます。
 
+Geminiを有効化する場合:
+
+```bash
+GEMINI_API_KEY=<Google AI Studioで作成したAPIキー>
+USE_GEMINI_MOCK=false
+```
+
 ## Supabase設定
 
 Supabase CLIを使う場合:
