@@ -12,7 +12,12 @@ export function toUserMessage(error: unknown, fallback: string) {
   }
 
   const message = errorMessage(error);
-  return translateKnownError(message) ?? fallback;
+  const translated = translateKnownError(message);
+  if (translated) {
+    return translated;
+  }
+
+  return message ? `${fallback} 詳細: ${message}` : fallback;
 }
 
 function errorMessage(error: unknown) {
@@ -56,6 +61,12 @@ export function translateKnownError(message: string) {
   }
   if (lower.includes("gemini returned an empty response")) {
     return "AIから空の返答が返りました。時間をおいてもう一度試してください。";
+  }
+  if (lower.includes("could not find a relationship") || lower.includes("schema cache")) {
+    return "データベースの関連付け情報を取得できませんでした。Supabaseのテーブル定義または外部キー設定を確認してください。";
+  }
+  if (lower.includes("permission denied")) {
+    return "データベースへのアクセス権限がありません。SupabaseのRLSポリシーを確認してください。";
   }
 
   return null;

@@ -22,9 +22,7 @@ export default async function DexPage({ searchParams }: { searchParams: SearchPa
   const { q = "" } = await searchParams;
   const { data, error } = await supabase
     .from("user_fish_dex")
-    .select(
-      "fish_species_id, first_encounter_id, encounter_count, created_at, fish_species:fish_species_id(id, japanese_name, scientific_name)"
-    )
+    .select("fish_species_id, first_encounter_id, encounter_count, created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -41,12 +39,21 @@ export default async function DexPage({ searchParams }: { searchParams: SearchPa
       return row.first_encounter_id ?? null;
     })
     .filter((id): id is string => Boolean(id));
+  const speciesIds = (data ?? [])
+    .map((item) => {
+      const row = item as { fish_species_id?: string | null };
+      return row.fish_species_id ?? null;
+    })
+    .filter((id): id is string => Boolean(id));
 
-  const firstEncounterById = await fetchFirstEncounters(supabase, firstEncounterIds);
+  const [firstEncounterById, speciesById] = await Promise.all([
+    fetchFirstEncounters(supabase, firstEncounterIds),
+    fetchSpecies(supabase, speciesIds)
+  ]);
 
   const cards = await Promise.all(
     (data ?? [])
-      .map((item) => mapDexRow(item, firstEncounterById))
+      .map((item) => mapDexRow(item, firstEncounterById, speciesById))
       .filter((item): item is Omit<FishCardProps, "imageUrl"> & { photoPath: string | null } => Boolean(item))
       .filter((item) => {
         const needle = q.trim().toLowerCase();
@@ -124,15 +131,19 @@ function SetupMessage() {
   );
 }
 
-function mapDexRow(item: unknown, firstEncounterById: Map<string, FirstEncounter>) {
+function mapDexRow(
+  item: unknown,
+  firstEncounterById: Map<string, FirstEncounter>,
+  speciesById: Map<string, RelatedSpecies>
+) {
   const row = item as {
+    fish_species_id?: string | null;
     encounter_count?: number;
     created_at?: string | null;
     first_encounter_id?: string | null;
-    fish_species?: RelatedSpecies;
   };
 
-  const relatedSpecies = firstRelated(row.fish_species);
+  const relatedSpecies = row.fish_species_id ? speciesById.get(row.fish_species_id) : null;
   if (!relatedSpecies?.id || !relatedSpecies.japanese_name) {
     return null;
   }
@@ -147,6 +158,26 @@ function mapDexRow(item: unknown, firstEncounterById: Map<string, FirstEncounter
     encounterCount: row.encounter_count ?? 0,
     photoPath: firstEncounter?.photo_path ?? null
   };
+}
+
+async function fetchSpecies(supabase: Awaited<ReturnType<typeof createClient>>, speciesIds: string[]) {
+  if (speciesIds.length === 0) {
+    return new Map<string, RelatedSpecies>();
+  }
+
+  const { data } = await supabase
+    .from("fish_species")
+    .select("id, japanese_name, scientific_name")
+    .in("id", speciesIds);
+
+  return new Map(
+    (data ?? [])
+      .map((item) => {
+        const row = item as RelatedSpecies;
+        return row.id ? [row.id, row] : null;
+      })
+      .filter((entry): entry is [string, RelatedSpecies] => Boolean(entry))
+  );
 }
 
 async function fetchFirstEncounters(
@@ -173,22 +204,11 @@ async function fetchFirstEncounters(
 }
 
 type RelatedSpecies =
-  | {
-      id?: string;
-      japanese_name?: string;
-      scientific_name?: string | null;
-    }
-  | Array<{
-      id?: string;
-      japanese_name?: string;
-      scientific_name?: string | null;
-    }>
-  | undefined
-  | null;
-
-function firstRelated(value: RelatedSpecies) {
-  return Array.isArray(value) ? (value[0] ?? null) : value;
-}
+  {
+    id?: string;
+    japanese_name?: string;
+    scientific_name?: string | null;
+  };
 
 type FirstEncounter = {
   id?: string;
