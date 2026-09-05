@@ -47,7 +47,7 @@ export default async function SpeciesDetailPage({ params }: { params: Params }) 
       .maybeSingle()
   ]);
 
-  const queryError = dexError ?? encountersError ?? speciesError;
+  const queryError = dexError ?? encountersError;
   if (queryError) {
     return (
       <div className="shell py-10">
@@ -61,6 +61,17 @@ export default async function SpeciesDetailPage({ params }: { params: Params }) 
 
   const encounterRows = encounters ?? [];
   const species = mapSpecies(dex) ?? mapSpeciesFromEncounter(encounterRows[0], encounterRows.length) ?? mapSpeciesById(speciesById);
+  if (!species && speciesError) {
+    return (
+      <div className="shell py-10">
+        <ErrorState message={toUserMessage(speciesError, "魚の詳細を取得できませんでした。")} />
+        <Link className="mt-5 inline-flex rounded-full bg-abyss px-5 py-3 font-bold text-white" href="/dex">
+          MY図鑑へ戻る
+        </Link>
+      </div>
+    );
+  }
+
   if (!species) {
     return (
       <div className="shell py-10">

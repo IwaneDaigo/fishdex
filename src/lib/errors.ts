@@ -11,8 +11,22 @@ export function toUserMessage(error: unknown, fallback: string) {
     return "入力内容を確認してください。数値や文字数が正しい範囲に収まっている必要があります。";
   }
 
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const message = errorMessage(error);
   return translateKnownError(message) ?? fallback;
+}
+
+function errorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+
+  return String(error ?? "");
 }
 
 export function translateKnownError(message: string) {
