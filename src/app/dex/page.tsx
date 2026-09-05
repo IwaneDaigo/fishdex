@@ -23,7 +23,7 @@ export default async function DexPage({ searchParams }: { searchParams: SearchPa
   const { data, error } = await supabase
     .from("user_fish_dex")
     .select(
-      "encounter_count, created_at, fish_species:fish_species_id(id, japanese_name, scientific_name), first_encounter:first_encounter_id(photo_path, encountered_at, created_at)"
+      "fish_species_id, first_encounter_id, encounter_count, created_at, fish_species:fish_species_id(id, japanese_name, scientific_name)"
     )
     .order("created_at", { ascending: false });
 
@@ -35,9 +35,18 @@ export default async function DexPage({ searchParams }: { searchParams: SearchPa
     );
   }
 
+  const firstEncounterIds = (data ?? [])
+    .map((item) => {
+      const row = item as { first_encounter_id?: string | null };
+      return row.first_encounter_id ?? null;
+    })
+    .filter((id): id is string => Boolean(id));
+
+  const firstEncounterById = await fetchFirstEncounters(supabase, firstEncounterIds);
+
   const cards = await Promise.all(
     (data ?? [])
-      .map((item) => mapDexRow(item))
+      .map((item) => mapDexRow(item, firstEncounterById))
       .filter((item): item is Omit<FishCardProps, "imageUrl"> & { photoPath: string | null } => Boolean(item))
       .filter((item) => {
         const needle = q.trim().toLowerCase();
@@ -115,11 +124,12 @@ function SetupMessage() {
   );
 }
 
-function mapDexRow(item: unknown) {
+function mapDexRow(item: unknown, firstEncounterById: Map<string, FirstEncounter>) {
   const row = item as {
     encounter_count?: number;
+    created_at?: string | null;
+    first_encounter_id?: string | null;
     fish_species?: RelatedSpecies;
-    first_encounter?: { photo_path?: string | null; encountered_at?: string | null; created_at?: string | null } | null;
   };
 
   const relatedSpecies = firstRelated(row.fish_species);
@@ -127,14 +137,39 @@ function mapDexRow(item: unknown) {
     return null;
   }
 
+  const firstEncounter = row.first_encounter_id ? firstEncounterById.get(row.first_encounter_id) : null;
+
   return {
     speciesId: relatedSpecies.id,
     japaneseName: relatedSpecies.japanese_name,
     scientificName: relatedSpecies.scientific_name ?? null,
-    firstEncounteredAt: row.first_encounter?.encountered_at ?? row.first_encounter?.created_at ?? null,
+    firstEncounteredAt: firstEncounter?.encountered_at ?? firstEncounter?.created_at ?? row.created_at ?? null,
     encounterCount: row.encounter_count ?? 0,
-    photoPath: row.first_encounter?.photo_path ?? null
+    photoPath: firstEncounter?.photo_path ?? null
   };
+}
+
+async function fetchFirstEncounters(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  firstEncounterIds: string[]
+) {
+  if (firstEncounterIds.length === 0) {
+    return new Map<string, FirstEncounter>();
+  }
+
+  const { data } = await supabase
+    .from("encounters")
+    .select("id, photo_path, encountered_at, created_at")
+    .in("id", firstEncounterIds);
+
+  return new Map(
+    (data ?? [])
+      .map((item) => {
+        const row = item as FirstEncounter;
+        return row.id ? [row.id, row] : null;
+      })
+      .filter((entry): entry is [string, FirstEncounter] => Boolean(entry))
+  );
 }
 
 type RelatedSpecies =
@@ -154,6 +189,13 @@ type RelatedSpecies =
 function firstRelated(value: RelatedSpecies) {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
+
+type FirstEncounter = {
+  id?: string;
+  photo_path?: string | null;
+  encountered_at?: string | null;
+  created_at?: string | null;
+};
 
 async function signedPhotoUrl(supabase: Awaited<ReturnType<typeof createClient>>, path: string) {
   const { data } = await supabase.storage.from("encounter-photos").createSignedUrl(path, 60 * 60);
